@@ -45,7 +45,7 @@ function PlayContent() {
   const playerId = searchParams.get("player") ?? "";
 
   const snap = useGameSnapshot(params.sessionId);
-  const players = usePlayers(params.sessionId);
+  const players = usePlayers(snap?.state !== "ended" ? params.sessionId : null);
 
   const [question, setQuestion] = useState<QuestionData | null>(null);
   const [answered, setAnswered] = useState<number | null>(null); // choice index
@@ -53,6 +53,12 @@ function PlayContent() {
   const [timeLeft, setTimeLeft] = useState<number>(20);
   const [submitting, setSubmitting] = useState(false);
   const lastQRef = useRef<number>(-1);
+
+  // Guard: no player_id means the user navigated here directly without joining.
+  // Redirect to /join so they can enter the PIN and nickname properly.
+  useEffect(() => {
+    if (!playerId) router.replace("/join");
+  }, [playerId, router]);
 
   // Fetch question whenever current_q changes
   useEffect(() => {
@@ -105,6 +111,9 @@ function PlayContent() {
 
   // Get player's score from the live list
   const myPlayer = players.find((p) => p.id === playerId);
+
+  // Render nothing while redirect to /join fires (playerId is empty)
+  if (!playerId) return null;
 
   if (!snap) {
     return (

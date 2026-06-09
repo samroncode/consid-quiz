@@ -16,6 +16,12 @@ export async function POST(req: Request, { params }: Params) {
     return NextResponse.json({ error: "nickname required (max 24 chars)" }, { status: 422 });
   }
 
+  // Zod v4 applies .trim() as a transform after min(1), so check again after trimming
+  const nickname = parsed.data.nickname.trim();
+  if (!nickname) {
+    return NextResponse.json({ error: "nickname required (max 24 chars)" }, { status: 422 });
+  }
+
   const session = db.sessions.byId(session_id);
   if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
   if (session.state !== "lobby") {
@@ -26,7 +32,7 @@ export async function POST(req: Request, { params }: Params) {
   db.players.insert({
     id: player_id,
     session_id,
-    nickname: parsed.data.nickname,
+    nickname,
     score: 0,
     joined_at: new Date().toISOString(),
   });

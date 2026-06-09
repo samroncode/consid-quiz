@@ -40,7 +40,7 @@ function HostContent() {
   const hostToken = searchParams.get("token") ?? "";
 
   const snap = useGameSnapshot(params.sessionId);
-  const players = usePlayers(params.sessionId);
+  const players = usePlayers(snap?.state !== "ended" ? params.sessionId : null);
 
   const [meta, setMeta] = useState<SessionMeta | null>(null);
   const [question, setQuestion] = useState<QuestionData | null>(null);
@@ -101,6 +101,7 @@ function HostContent() {
   useEffect(() => {
     if (!snap || snap.state !== "question") return;
     const id = setInterval(async () => {
+      if (document.hidden) return;
       const res = await fetch(`/api/sessions/${params.sessionId}/answer-count?q=${snap.current_q}`);
       if (res.ok) {
         const { count } = await res.json();
